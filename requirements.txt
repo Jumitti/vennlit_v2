@@ -3,4 +3,3 @@ streamlit
 matplotlib
 venn
 openpyxl
-deprecation

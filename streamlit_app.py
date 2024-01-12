@@ -1,12 +1,11 @@
-import pandas as pd
-from itertools import combinations
-import streamlit as st
-import matplotlib.pyplot as plt
-import openpyxl
-from venn import venn, pseudovenn
 from io import BytesIO
+from itertools import combinations
 from zipfile import ZipFile
-from streamlit_modal import Modal
+
+import matplotlib.pyplot as plt
+import pandas as pd
+import streamlit as st
+from venn import venn, pseudovenn
 
 
 @st.cache_data
@@ -67,7 +66,7 @@ col1, col2, col3 = st.columns([0.8, 1.4, 0.8])
 
 with col1:
     st.subheader("📎 Example and Hints")
-    st.link_button("Help", url,)
+    st.link_button("Help", 'https://jumitti.notion.site/jumitti/VennLit-V2-e20a373a9c6f4c1390e72a7953ffcb0c')
     if st.checkbox("**Try example**", value=1):
         with col2:
             st.subheader('Welcome to VennLit V2 😊')
