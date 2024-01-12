@@ -1,4 +1,5 @@
-streamlit
-matplotlib
-matplotlib_venn
 pandas
+streamlit
+matplotlib_venn
+matplotlib
+venn
