@@ -157,10 +157,10 @@ with col1:
         st.write("Inspired by [InteractiVenn](http://www.interactivenn.net/) (DOI:[10.1186/s12859-015-0611-3](http://doi.org/10.1186/s12859-015-0611-3)")
         st.write("VennLit V2 rebuild and up-to-date by [@Jumitti](https://github.com/Jumitti/vennlit_v2)")
         st.divider()
-        # streamlit_analytics.start_tracking()
-        # streamlit_analytics.stop_tracking()
-        # views = streamlit_analytics.main.counts["total_pageviews"]
-        # st.write(f"Total connections (from last reboot) 👨🏼‍💻: {int(views)}")
+        streamlit_analytics.start_tracking()
+        streamlit_analytics.stop_tracking()
+        views = streamlit_analytics.main.counts["total_pageviews"]
+        st.write(f"Total connections (from last reboot) 👨🏼‍💻: {int(views)}")
         st.write("My other app: [TFinder](https://tfinder-ipmc.streamlit.app/) and [ChickenAI](https://chickenai.streamlit.app/)")
 
 # Setting of Venn configurations
