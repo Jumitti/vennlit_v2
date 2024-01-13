@@ -127,9 +127,16 @@ with col1:
         with col3:
             st.subheader('📌 Lists selection')
             items_occurrence = {per_list: set(df[per_list].dropna()) for per_list in lists}
-            selection_lists = st.multiselect('Lists selection', lists, default=lists[:2], max_selections=6,
+            selection_lists = st.multiselect('Lists selection', lists, default=lists[:2],
                                              placeholder="Choose 2-6 lists", disabled=False,
                                              label_visibility='collapsed')
+            num_sets = len(selection_lists)
+            selected_lists = selection_lists[:num_sets]
+            venn_data = download_venn_data(selected_lists)
+            st.download_button(label="💾 Download Venn data",
+                               data=venn_data,
+                               file_name=f'venn_data{"".join("_" + selected_list for selected_list in selection_lists)}.zip',
+                               mime="application/zip", )
     with col1:
         st.subheader("✒️Credits")
         st.write("Original app by [@professordata](https://github.com/dataprofessor/vennlit)")
@@ -204,15 +211,8 @@ legend_loc_options = {'Best': 'best',
                       'Center': 'center'}
 
 if 1 < len(selection_lists) <= 6:
-    num_sets = len(selection_lists)
-    selected_lists = selection_lists[:num_sets]
 
     with col3:
-        venn_data = download_venn_data(selected_lists)
-        st.download_button(label="💾 Download Venn data",
-                           data=venn_data,
-                           file_name=f'venn_data{"".join("_" + selected_list for selected_list in selection_lists)}.zip',
-                           mime="application/zip", )
         st.divider()
         st.subheader('⚙️Venn diagram settings')
         fmt = st.radio(
