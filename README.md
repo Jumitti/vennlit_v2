@@ -80,6 +80,10 @@ Simply, you can **download** the image in **png** format.
 
 The **.svg** allows you to open the image with **[InkScape](https://inkscape.org/)** and other software to easily modify colors, fonts, etc.
 
+<img src="example/venn.png" width="350" /> <img src="example/pseudovenn.png" width="350" />
+
+
+
 # ❓Venn or Pseudo-Venn diagram for 6 comparisons
 
 Six-set true Venn diagrams are somewhat unwieldy, and not all intersections are usually of interest.
