@@ -1,7 +1,7 @@
 from io import BytesIO
 from itertools import combinations
 from zipfile import ZipFile
-
+import streamlit_analytics
 import matplotlib.pyplot as plt
 import pandas as pd
 import streamlit as st
@@ -130,6 +130,18 @@ with col1:
             selection_lists = st.multiselect('Lists selection', lists, default=lists[:2], max_selections=6,
                                              placeholder="Choose 2-6 lists", disabled=False,
                                              label_visibility='collapsed')
+    with col1:
+        st.subheader("✒️Credits")
+        st.write("Original app by [@professordata](https://github.com/dataprofessor/vennlit)")
+        st.write("Venn diagram with [@tctianchi](https://github.com/tctianchi/pyvenn) and [@LankyCyril](https://github.com/LankyCyril/pyvenn)")
+        st.write("Inspired by [InteractiVenn](http://www.interactivenn.net/) (DOI:[10.1186/s12859-015-0611-3](http://doi.org/10.1186/s12859-015-0611-3)")
+        st.write("VennLit V2 rebuild and up-to-date by [@Jumitti](https://github.com/Jumitti/vennlit_v2)")
+        st.divider()
+        streamlit_analytics.start_tracking()
+        streamlit_analytics.stop_tracking()
+        views = streamlit_analytics.main.counts["total_pageviews"]
+        st.write(f"Total connections (from last reboot) 👨🏼‍💻: {int(views)}")
+        st.write("My other app: [TFinder](https://tfinder-ipmc.streamlit.app/) and [ChickenAI](https://chickenai.streamlit.app/)")
 
 plt.figure(figsize=(8, 8))
 
