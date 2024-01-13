@@ -323,8 +323,7 @@ if len(selection_lists) == 6:  # Pseudo-Venn for 6 comparison
     with col2:
         # Pseudo-Venn diagram
         st.subheader('Pseudo-Venn diagram')
-        dataset_dict = {
-            name: set(items_occurrence[selection_lists[i]]) for i, (name, items) in enumerate(items_occurrence.items())}
+        dataset_dict = {name: set(items_occurrence[name]) for name in selected_lists}
         pseudovenn(dataset_dict, fmt=venn_format, cmap=cmap_format, fontsize=font_size, legend_loc=legend_loc_format,
                    figsize=(fig_size, fig_size),
                    hint_hidden=False if hint_hidden_format else True)
