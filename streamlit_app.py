@@ -263,7 +263,7 @@ if 1 < len(selection_lists) <= 6:  # Venn diagram 2 to 6 comparisons
         # Download PNG and SVG
         buffer_png = download_png()
         st.download_button(
-            label="Download Venn diagram (.png)",
+            label="💾 Download Venn diagram (.png)",
             data=buffer_png,
             file_name=f'venn{"".join("_" + selected_list for selected_list in selection_lists)}.png',
             mime='image/png',
@@ -271,7 +271,7 @@ if 1 < len(selection_lists) <= 6:  # Venn diagram 2 to 6 comparisons
 
         buffer_svg = download_svg()
         st.download_button(
-            label="Download Venn diagram (.svg)",
+            label="💾 Download Venn diagram (.svg)",
             data=buffer_svg,
             file_name=f'venn{"".join("_" + selected_list for selected_list in selection_lists)}.svg',
             mime='image/svg+xml',
@@ -333,7 +333,7 @@ if len(selection_lists) == 6:  # Pseudo-Venn for 6 comparison
         # Download PNG and SVG
         buffer_png = download_png()
         st.download_button(
-            label="Download Pseudo-Venn diagram (.png)",
+            label="💾 Download Pseudo-Venn diagram (.png)",
             data=buffer_png,
             file_name=f'pseudovenn{"".join("_" + selected_list for selected_list in selection_lists)}.png',
             mime='image/png',
@@ -341,7 +341,7 @@ if len(selection_lists) == 6:  # Pseudo-Venn for 6 comparison
 
         buffer_svg = download_svg()
         st.download_button(
-            label="Download Pseudo-Venn diagram (.svg)",
+            label="💾 Download Pseudo-Venn diagram (.svg)",
             data=buffer_svg,
             file_name=f'pseudovenn{"".join("_" + selected_list for selected_list in selection_lists)}.svg',
             mime='image/svg+xml',
