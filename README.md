@@ -1,4 +1,4 @@
-# VennLit V2
+# ⭕ VennLit V2
 
 **Application is accessible [HERE](https://vennlit.streamlit.app/)**
 
