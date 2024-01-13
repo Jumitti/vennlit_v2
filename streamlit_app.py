@@ -8,6 +8,7 @@ import streamlit as st
 from venn import venn, pseudovenn
 
 
+# Analyse of selected list to generate multidimensional Venn files
 @st.cache_data
 def download_venn_data(lists):
     items_occurrence = {per_list: set(df[per_list].dropna()) for per_list in lists}
@@ -35,6 +36,7 @@ def download_venn_data(lists):
     return venn_data
 
 
+# For download PNG Venn
 def download_png():
     buffer_png = BytesIO()
     plt.savefig(buffer_png, format="png", bbox_inches='tight')
@@ -43,6 +45,7 @@ def download_png():
     return buffer_png
 
 
+# For download SVG Venn
 def download_svg():
     buffer_svg = BytesIO()
     plt.savefig(buffer_svg, format="svg", bbox_inches='tight')
@@ -51,12 +54,13 @@ def download_svg():
     return buffer_svg
 
 
+# Settings for Streamlit page
 st.set_page_config(
     page_title="VennLit V2",
     page_icon="⭕",
     layout="wide")
 
-# Diagramme de Venn
+# Main page
 st.title('⭕ VennLit V2')
 
 df = []
@@ -65,9 +69,12 @@ selection_lists = []
 col1, col2, col3 = st.columns([0.8, 1.4, 0.8])
 
 with col1:
+    # Example section
     st.subheader("📎 Example and Hints")
+
     st.link_button("Help", 'https://jumitti.notion.site/jumitti/VennLit-V2-e20a373a9c6f4c1390e72a7953ffcb0c')
-    if st.checkbox("**Try example**", value=1):
+
+    if st.checkbox("**Try example**", value=1):  # Demo mode
         with col2:
             st.subheader('Welcome to VennLit V2 😊')
             st.write('You are by default in **demo** mode.\n'
@@ -75,27 +82,30 @@ with col1:
                      'You can also click on **Help**.')
         csv_file = 'example/example.csv'
         df = pd.read_csv(csv_file, delimiter=';')
+
     st.write("**.csv and .xlsx templates:**")
-    with open("example/example.csv", "rb") as file:
+    with open("example/example.csv", "rb") as file:  # Download .csv template
         st.download_button(
             label="Download example.csv",
             data=file,
             file_name="example.csv",
             mime="text/csv")
-    with open("example/example.xlsx", "rb") as file:
+    with open("example/example.xlsx", "rb") as file:  # Download .xlsx template
         st.download_button(
             label="Download example.xlsx",
             data=file,
             file_name="example.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
+    # Upload data section
     st.subheader("💽 Upload data")
+
     uploaded_files = st.file_uploader("**Upload one or more .xlsx .csv (delimiter ';') files**", type=["csv", "xlsx"],
                                       accept_multiple_files=True)
     if uploaded_files is not None:
         if len(uploaded_files) > 0:
             dfs = []
-            for file in uploaded_files:
+            for file in uploaded_files:  # Is .csv or .xlsx
                 if file.type == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
                     df = pd.read_excel(file)
                 else:
@@ -105,7 +115,7 @@ with col1:
 
             all_columns = [col for df in dfs for col in df.columns]
             duplicate_columns = [col for col in set(all_columns) if all_columns.count(col) > 1]
-            if duplicate_columns:
+            if duplicate_columns:  # Some lists with same name ?
                 st.warning(f"Some lists have the same name: {', '.join(duplicate_columns)}")
                 filtered_dfs = []
                 included_columns = set()
@@ -120,11 +130,13 @@ with col1:
                 df = pd.concat(dfs, axis=1)
 
     if len(df) > 0:
+        # Lists section
         st.subheader("🧮 Lists")
         st.dataframe(df, hide_index=True)
         lists = df.columns.tolist()
 
         with col3:
+            # Lists selection
             st.subheader('📌 Lists selection')
             items_occurrence = {per_list: set(df[per_list].dropna()) for per_list in lists}
             selection_lists = st.multiselect('Lists selection', lists, default=lists[:2],
@@ -138,6 +150,7 @@ with col1:
                                file_name=f'venn_data{"".join("_" + selected_list for selected_list in selection_lists)}.zip',
                                mime="application/zip", )
     with col1:
+        # Credits section
         st.subheader("✒️Credits")
         st.write("Original app by [@professordata](https://github.com/dataprofessor/vennlit)")
         st.write("Venn diagram with [@tctianchi](https://github.com/tctianchi/pyvenn) and [@LankyCyril](https://github.com/LankyCyril/pyvenn)")
@@ -150,10 +163,7 @@ with col1:
         st.write(f"Total connections (from last reboot) 👨🏼‍💻: {int(views)}")
         st.write("My other app: [TFinder](https://tfinder-ipmc.streamlit.app/) and [ChickenAI](https://chickenai.streamlit.app/)")
 
-plt.figure(figsize=(8, 8))
-
-# Setting of configurations
-
+# Setting of Venn configurations
 fmt_options = {"Number": "{size}",
                "Percentage": "{percentage:.1f}%",
                "Logic": "{logic}"}
@@ -209,11 +219,12 @@ legend_loc_options = {'Best': 'best',
                       'Center Right': 'center right',
                       'Center Left': 'center left',
                       'Center': 'center'}
+plt.figure(figsize=(8, 8))
 
-if 1 < len(selection_lists) <= 6:
-
+if 1 < len(selection_lists) <= 6:  # Venn diagram 2 to 6 comparisons
     with col3:
         st.divider()
+        # Settings
         st.subheader('⚙️Venn diagram settings')
         fmt = st.radio(
             "**Number format:**",
@@ -241,6 +252,7 @@ if 1 < len(selection_lists) <= 6:
         legend_loc_format = legend_loc_options[legend_loc]
 
     with col2:
+        # Venn diagram
         st.subheader('Venn diagram')
         dataset_dict = {name: set(items_occurrence[name]) for name in selected_lists}
         venn(dataset_dict, fmt=venn_format, cmap=cmap_format, fontsize=font_size, legend_loc=legend_loc_format,
@@ -248,6 +260,7 @@ if 1 < len(selection_lists) <= 6:
         st.pyplot(plt)
 
     with col3:
+        # Download PNG and SVG
         buffer_png = download_png()
         st.download_button(
             label="Download Venn diagram (.png)",
@@ -266,9 +279,10 @@ if 1 < len(selection_lists) <= 6:
         st.write(
             'Try opening the .svg diagram using [Inkscape](https://inkscape.org/) to move shapes, resize, change font, colors and more.')
 
-if len(selection_lists) == 6:
+if len(selection_lists) == 6:  # Pseudo-Venn for 6 comparison
     with col3:
         st.divider()
+        # Pseudo-Venn settings
         st.subheader('⚙️Pseudo-Venn diagram settings',
                      help='Six-set true Venn diagrams are somewhat unwieldy, and not all intersections are usually of interest.\n\n'
                           'If you wish to display information about elements in hidden intersections,'
@@ -307,6 +321,7 @@ if len(selection_lists) == 6:
                                               'Some intersections are not present, but the most commonly wanted are.')
 
     with col2:
+        # Pseudo-Venn diagram
         st.subheader('Pseudo-Venn diagram')
         dataset_dict = {
             name: set(items_occurrence[selection_lists[i]]) for i, (name, items) in enumerate(items_occurrence.items())}
@@ -316,6 +331,7 @@ if len(selection_lists) == 6:
         st.pyplot(plt)
 
     with col3:
+        # Download PNG and SVG
         buffer_png = download_png()
         st.download_button(
             label="Download Pseudo-Venn diagram (.png)",
