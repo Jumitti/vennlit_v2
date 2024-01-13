@@ -5,3 +5,4 @@ venn
 openpyxl
 google
 google-cloud
+google-cloud-firestore
