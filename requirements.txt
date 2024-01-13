@@ -3,3 +3,4 @@ streamlit
 matplotlib
 venn
 openpyxl
+google
