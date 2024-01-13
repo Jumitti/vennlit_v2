@@ -3,6 +3,4 @@ streamlit
 matplotlib
 venn
 openpyxl
-google
-google-cloud
-google-cloud-firestore
+streamlit-analytics
