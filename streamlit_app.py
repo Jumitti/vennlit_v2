@@ -6,6 +6,19 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import streamlit as st
 from venn import venn, pseudovenn
+import chardet
+import csv
+
+
+def detect_delimiter(file_path):
+    with open(file_path, 'rb') as f:
+        result = chardet.detect(f.read())
+    encoding = result['encoding']
+    with open(file_path, 'r', encoding=encoding) as f:
+        sample = f.read(4096)
+        dialect = csv.Sniffer().sniff(sample)
+
+    return dialect.delimiter
 
 
 # Analyse of selected list to generate multidimensional Venn files
@@ -81,7 +94,8 @@ with col1:
                      'You can play with VennLit V2 or disable **Try example** on the left **📎 Example** section.\n'
                      'You can also click on **Help**.')
         csv_file = 'example/example.csv'
-        df = pd.read_csv(csv_file, delimiter=';')
+        snif_delimiter = detect_delimiter(csv_file)
+        df = pd.read_csv(csv_file, delimiter=snif_delimiter)
 
     st.write("**.csv and .xlsx templates:**")
     with open("example/example.csv", "rb") as file:  # Download .csv template
@@ -100,7 +114,7 @@ with col1:
     # Upload data section
     st.subheader("💽 Upload data")
 
-    uploaded_files = st.file_uploader("**Upload one or more .xlsx .csv (delimiter ';') files**", type=["csv", "xlsx"],
+    uploaded_files = st.file_uploader("**Upload one or more .xlsx .csv files**", type=["csv", "xlsx"],
                                       accept_multiple_files=True)
     if uploaded_files is not None:
         if len(uploaded_files) > 0:
@@ -109,7 +123,8 @@ with col1:
                 if file.type == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
                     df = pd.read_excel(file)
                 else:
-                    df = pd.read_csv(file, delimiter=';')
+                    snif_delimiter = detect_delimiter(csv_file)
+                    df = pd.read_csv(csv_file, delimiter=snif_delimiter)
 
                 dfs.append(df)
 
@@ -144,24 +159,23 @@ with col1:
                                              label_visibility='collapsed')
             num_sets = len(selection_lists)
             selected_lists = selection_lists[:num_sets]
-            venn_data = download_venn_data(selected_lists)
-            st.download_button(label="💾 Download Venn data",
-                               data=venn_data,
-                               file_name=f'venn_data{"".join("_" + selected_list for selected_list in selection_lists)}.zip',
-                               mime="application/zip", )
+
     with col1:
         # Credits section
         st.subheader("✒️Credits")
         st.write("Original app by [@professordata](https://github.com/dataprofessor/vennlit)")
-        st.write("Venn diagram with [@tctianchi](https://github.com/tctianchi/pyvenn) and [@LankyCyril](https://github.com/LankyCyril/pyvenn)")
-        st.write("Inspired by [InteractiVenn](http://www.interactivenn.net/) (DOI:[10.1186/s12859-015-0611-3](http://doi.org/10.1186/s12859-015-0611-3)")
+        st.write(
+            "Venn diagram with [@tctianchi](https://github.com/tctianchi/pyvenn) and [@LankyCyril](https://github.com/LankyCyril/pyvenn)")
+        st.write(
+            "Inspired by [InteractiVenn](http://www.interactivenn.net/) (DOI:[10.1186/s12859-015-0611-3](http://doi.org/10.1186/s12859-015-0611-3)")
         st.write("VennLit V2 rebuild and up-to-date by [@Jumitti](https://github.com/Jumitti/vennlit_v2)")
         st.divider()
         # streamlit_analytics.start_tracking()
         # streamlit_analytics.stop_tracking()
         # views = streamlit_analytics.main.counts["total_pageviews"]
         # st.write(f"Total connections (from last reboot) 👨🏼‍💻: {int(views)}")
-        st.write("My other app: [TFinder](https://tfinder-ipmc.streamlit.app/) and [ChickenAI](https://chickenai.streamlit.app/)")
+        st.write(
+            "My other app: [TFinder](https://tfinder-ipmc.streamlit.app/) and [ChickenAI](https://chickenai.streamlit.app/)")
 
 # Setting of Venn configurations
 fmt_options = {"Number": "{size}",
@@ -219,132 +233,150 @@ legend_loc_options = {'Best': 'best',
                       'Center Right': 'center right',
                       'Center Left': 'center left',
                       'Center': 'center'}
-plt.figure(figsize=(8, 8))
 
-if 1 < len(selection_lists) <= 6:  # Venn diagram 2 to 6 comparisons
-    with col3:
-        st.divider()
-        # Settings
-        st.subheader('⚙️Venn diagram settings')
-        fmt = st.radio(
-            "**Number format:**",
-            list(fmt_options.keys()),
-            index=0,
-            horizontal=True, key='venn_fmt')
-        venn_format = fmt_options[fmt]
+try:
+    plt.figure(figsize=(8, 8))
+    if len(selection_lists) > 1:
+        with col3:
+            venn_data = download_venn_data(selected_lists)
+            st.download_button(label="💾 Download Venn data",
+                               data=venn_data,
+                               file_name=f'venn_data{"".join("_" + selected_list for selected_list in selection_lists)}.zip',
+                               mime="application/zip", )
 
-        cmap = st.selectbox(
-            "**Colors:**",
-            list(cmap_options.keys()),
-            index=7, key='venn_cmap')
-        cmap_format = cmap_options[cmap]
+    if 1 < len(selection_lists) <= 6:  # Venn diagram 2 to 6 comparisons
+        with col3:
+            st.divider()
+            # Settings
+            st.subheader('⚙️Venn diagram settings')
+            fmt = st.radio(
+                "**Number format:**",
+                list(fmt_options.keys()),
+                index=0,
+                horizontal=True, key='venn_fmt')
+            venn_format = fmt_options[fmt]
 
-        font_size = st.slider("**Font size:**", min_value=5, max_value=20, value=10, step=1, key='venn_font_size',
-                              help=None)
+            cmap = st.selectbox(
+                "**Colors:**",
+                list(cmap_options.keys()),
+                index=7, key='venn_cmap')
+            cmap_format = cmap_options[cmap]
 
-        fig_size = st.slider("**Venn size**:", min_value=5, max_value=20, value=10, step=1, key='venn_fig_size',
-                             help=None)
+            font_size = st.slider("**Font size:**", min_value=5, max_value=20, value=10, step=1, key='venn_font_size',
+                                  help=None)
 
-        legend_loc = st.selectbox(
-            "**Legend position:**",
-            list(legend_loc_options.keys()),
-            index=0, key='venn_legend_loc')
-        legend_loc_format = legend_loc_options[legend_loc]
+            fig_size = st.slider("**Venn size**:", min_value=5, max_value=20, value=10, step=1, key='venn_fig_size',
+                                 help=None)
 
+            legend_loc = st.selectbox(
+                "**Legend position:**",
+                list(legend_loc_options.keys()),
+                index=0, key='venn_legend_loc')
+            legend_loc_format = legend_loc_options[legend_loc]
+
+        with col2:
+            # Venn diagram
+            st.subheader('Venn diagram')
+            dataset_dict = {name: set(items_occurrence[name]) for name in selected_lists}
+            venn(dataset_dict, fmt=venn_format, cmap=cmap_format, fontsize=font_size, legend_loc=legend_loc_format,
+                 figsize=(fig_size, fig_size))
+            st.pyplot(plt)
+
+        with col3:
+            # Download PNG and SVG
+            buffer_png = download_png()
+            st.download_button(
+                label="💾 Download Venn diagram (.png)",
+                data=buffer_png,
+                file_name=f'venn{"".join("_" + selected_list for selected_list in selection_lists)}.png',
+                mime='image/png',
+            )
+
+            buffer_svg = download_svg()
+            st.download_button(
+                label="💾 Download Venn diagram (.svg)",
+                data=buffer_svg,
+                file_name=f'venn{"".join("_" + selected_list for selected_list in selection_lists)}.svg',
+                mime='image/svg+xml',
+            )
+            st.write(
+                'Try opening the .svg diagram using [Inkscape](https://inkscape.org/) to move shapes, resize, change font, colors and more.')
+
+    if len(selection_lists) == 6:  # Pseudo-Venn for 6 comparison
+        with col3:
+            st.divider()
+            # Pseudo-Venn settings
+            st.subheader('⚙️Pseudo-Venn diagram settings',
+                         help='Six-set true Venn diagrams are somewhat unwieldy, and not all intersections are usually of interest.\n\n'
+                              'If you wish to display information about elements in hidden intersections,'
+                              'uncheck the option **hidden intersections** below.\n\n'
+                              'Some intersections are not present, but the most commonly wanted are.')
+            fmt = st.radio(
+                "**Number format:**",
+                list(fmt_options.keys()),
+                index=0,
+                horizontal=True, key='pseudovenn_fmt')
+            venn_format = fmt_options[fmt]
+
+            cmap = st.selectbox(
+                "**Colors:**",
+                list(cmap_options.keys()),
+                index=7, key='pseudovenn_cmap')
+            cmap_format = cmap_options[cmap]
+
+            font_size = st.slider("**Font size:**", min_value=5, max_value=20, value=10, step=1,
+                                  key='pseudovenn_font_size',
+                                  help=None)
+
+            fig_size = st.slider("**Pseudo-Venn size:**", min_value=5, max_value=20, value=10, step=1,
+                                 key='pseudovenn_fig_size',
+                                 help=None)
+
+            legend_loc = st.selectbox(
+                "**Legend position:**",
+                list(legend_loc_options.keys()),
+                index=0, key='pseudovenn_legend_loc')
+            legend_loc_format = legend_loc_options[legend_loc]
+
+            hint_hidden_format = st.checkbox('**Hidden intersections**', value=1,
+                                             help='Six-set true Venn diagrams are somewhat unwieldy, and not all intersections are usually of interest.\n\n'
+                                                  'If you wish to display information about elements in hidden intersections,'
+                                                  'uncheck the option **hidden intersections**.\n\n'
+                                                  'Some intersections are not present, but the most commonly wanted are.')
+
+        with col2:
+            # Pseudo-Venn diagram
+            st.subheader('Pseudo-Venn diagram')
+            dataset_dict = {name: set(items_occurrence[name]) for name in selected_lists}
+            pseudovenn(dataset_dict, fmt=venn_format, cmap=cmap_format, fontsize=font_size,
+                       legend_loc=legend_loc_format,
+                       figsize=(fig_size, fig_size),
+                       hint_hidden=False if hint_hidden_format else True)
+            st.pyplot(plt)
+
+        with col3:
+            # Download PNG and SVG
+            buffer_png = download_png()
+            st.download_button(
+                label="💾 Download Pseudo-Venn diagram (.png)",
+                data=buffer_png,
+                file_name=f'pseudovenn{"".join("_" + selected_list for selected_list in selection_lists)}.png',
+                mime='image/png',
+            )
+
+            buffer_svg = download_svg()
+            st.download_button(
+                label="💾 Download Pseudo-Venn diagram (.svg)",
+                data=buffer_svg,
+                file_name=f'pseudovenn{"".join("_" + selected_list for selected_list in selection_lists)}.svg',
+                mime='image/svg+xml',
+            )
+            st.write(
+                'Try opening the .svg diagram using [Inkscape](https://inkscape.org/) to move shapes, resize, change font, colors and more.')
+except Exception as e:
     with col2:
-        # Venn diagram
-        st.subheader('Venn diagram')
-        dataset_dict = {name: set(items_occurrence[name]) for name in selected_lists}
-        venn(dataset_dict, fmt=venn_format, cmap=cmap_format, fontsize=font_size, legend_loc=legend_loc_format,
-             figsize=(fig_size, fig_size))
-        st.pyplot(plt)
-
-    with col3:
-        # Download PNG and SVG
-        buffer_png = download_png()
-        st.download_button(
-            label="💾 Download Venn diagram (.png)",
-            data=buffer_png,
-            file_name=f'venn{"".join("_" + selected_list for selected_list in selection_lists)}.png',
-            mime='image/png',
-        )
-
-        buffer_svg = download_svg()
-        st.download_button(
-            label="💾 Download Venn diagram (.svg)",
-            data=buffer_svg,
-            file_name=f'venn{"".join("_" + selected_list for selected_list in selection_lists)}.svg',
-            mime='image/svg+xml',
-        )
-        st.write(
-            'Try opening the .svg diagram using [Inkscape](https://inkscape.org/) to move shapes, resize, change font, colors and more.')
-
-if len(selection_lists) == 6:  # Pseudo-Venn for 6 comparison
-    with col3:
-        st.divider()
-        # Pseudo-Venn settings
-        st.subheader('⚙️Pseudo-Venn diagram settings',
-                     help='Six-set true Venn diagrams are somewhat unwieldy, and not all intersections are usually of interest.\n\n'
-                          'If you wish to display information about elements in hidden intersections,'
-                          'uncheck the option **hidden intersections** below.\n\n'
-                          'Some intersections are not present, but the most commonly wanted are.')
-        fmt = st.radio(
-            "**Number format:**",
-            list(fmt_options.keys()),
-            index=0,
-            horizontal=True, key='pseudovenn_fmt')
-        venn_format = fmt_options[fmt]
-
-        cmap = st.selectbox(
-            "**Colors:**",
-            list(cmap_options.keys()),
-            index=7, key='pseudovenn_cmap')
-        cmap_format = cmap_options[cmap]
-
-        font_size = st.slider("**Font size:**", min_value=5, max_value=20, value=10, step=1, key='pseudovenn_font_size',
-                              help=None)
-
-        fig_size = st.slider("**Pseudo-Venn size:**", min_value=5, max_value=20, value=10, step=1,
-                             key='pseudovenn_fig_size',
-                             help=None)
-
-        legend_loc = st.selectbox(
-            "**Legend position:**",
-            list(legend_loc_options.keys()),
-            index=0, key='pseudovenn_legend_loc')
-        legend_loc_format = legend_loc_options[legend_loc]
-
-        hint_hidden_format = st.checkbox('**Hidden intersections**', value=1,
-                                         help='Six-set true Venn diagrams are somewhat unwieldy, and not all intersections are usually of interest.\n\n'
-                                              'If you wish to display information about elements in hidden intersections,'
-                                              'uncheck the option **hidden intersections**.\n\n'
-                                              'Some intersections are not present, but the most commonly wanted are.')
-
-    with col2:
-        # Pseudo-Venn diagram
-        st.subheader('Pseudo-Venn diagram')
-        dataset_dict = {name: set(items_occurrence[name]) for name in selected_lists}
-        pseudovenn(dataset_dict, fmt=venn_format, cmap=cmap_format, fontsize=font_size, legend_loc=legend_loc_format,
-                   figsize=(fig_size, fig_size),
-                   hint_hidden=False if hint_hidden_format else True)
-        st.pyplot(plt)
-
-    with col3:
-        # Download PNG and SVG
-        buffer_png = download_png()
-        st.download_button(
-            label="💾 Download Pseudo-Venn diagram (.png)",
-            data=buffer_png,
-            file_name=f'pseudovenn{"".join("_" + selected_list for selected_list in selection_lists)}.png',
-            mime='image/png',
-        )
-
-        buffer_svg = download_svg()
-        st.download_button(
-            label="💾 Download Pseudo-Venn diagram (.svg)",
-            data=buffer_svg,
-            file_name=f'pseudovenn{"".join("_" + selected_list for selected_list in selection_lists)}.svg',
-            mime='image/svg+xml',
-        )
-        st.write(
-            'Try opening the .svg diagram using [Inkscape](https://inkscape.org/) to move shapes, resize, change font, colors and more.')
+        st.warning(f"It appears that there is an error with one or more values in your lists..."
+                   "Please check your data. Otherwise, convert your file to .csv with the ';' deliminator.\n\n"
+                   "If this does not resolve the problems, contact me by email (minnitijulien06@gmail.com ; minniti@ipmc.cnrs.fr) or submit a [GitHub Issue](https://github.com/Jumitti/vennlit_v2/issues).\n\n"
+                   "Error information:"
+                   f"{e}", icon='🚨')
