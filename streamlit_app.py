@@ -1,3 +1,4 @@
+import io
 from io import BytesIO
 from itertools import combinations
 from zipfile import ZipFile
@@ -11,14 +12,22 @@ import csv
 
 
 def detect_delimiter(file_path):
-    with open(file_path, 'rb') as f:
-        result = chardet.detect(f.read())
-    encoding = result['encoding']
-    with open(file_path, 'r', encoding=encoding) as f:
-        sample = f.read(4096)
+    try:
+        with open(file_path, 'rb') as f:
+            result = chardet.detect(f.read())
+        encoding = result['encoding']
+        with open(file_path, 'r', encoding=encoding) as f:
+            sample = f.read(4096)
+            dialect = csv.Sniffer().sniff(sample)
+        return dialect.delimiter
+    except Exception as e:
+        result = chardet.detect(file_content)
+        encoding = result['encoding']
+        sample = file_content[:4096]
+        sample = sample.decode(encoding)
         dialect = csv.Sniffer().sniff(sample)
 
-    return dialect.delimiter
+        return dialect.delimiter, encoding
 
 
 # Analyse of selected list to generate multidimensional Venn files
@@ -72,116 +81,6 @@ def download_svg():
 
     return buffer_svg
 
-
-# Settings for Streamlit page
-st.set_page_config(
-    page_title="VennLit V2",
-    page_icon="⭕",
-    layout="wide")
-
-# Main page
-st.title('⭕ VennLit V2')
-
-df = []
-selection_lists = []
-
-col1, col2, col3 = st.columns([0.8, 1.4, 0.8])
-
-with col1:
-    # Example section
-    st.subheader("📎 Example and Hints")
-
-    st.link_button("Help", 'https://jumitti.notion.site/jumitti/VennLit-V2-e20a373a9c6f4c1390e72a7953ffcb0c')
-
-    if st.checkbox("**Try example**", value=1):  # Demo mode
-        with col2:
-            st.subheader('Welcome to VennLit V2 😊')
-            st.write('You are by default in **demo** mode.\n'
-                     'You can play with VennLit V2 or disable **Try example** on the left **📎 Example** section.\n'
-                     'You can also click on **Help**.')
-        csv_file = 'example/example.csv'
-        snif_delimiter = detect_delimiter(csv_file)
-        df = pd.read_csv(csv_file, delimiter=snif_delimiter)
-
-    st.write("**.csv and .xlsx templates:**")
-    with open("example/example.csv", "rb") as file:  # Download .csv template
-        st.download_button(
-            label="Download example.csv",
-            data=file,
-            file_name="example.csv",
-            mime="text/csv")
-    with open("example/example.xlsx", "rb") as file:  # Download .xlsx template
-        st.download_button(
-            label="Download example.xlsx",
-            data=file,
-            file_name="example.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-
-    # Upload data section
-    st.subheader("💽 Upload data")
-
-    uploaded_files = st.file_uploader("**Upload one or more .xlsx .csv files**", type=["csv", "xlsx"],
-                                      accept_multiple_files=True)
-    if uploaded_files is not None:
-        if len(uploaded_files) > 0:
-            dfs = []
-            for file in uploaded_files:  # Is .csv or .xlsx
-                if file.type == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
-                    df = pd.read_excel(file)
-                else:
-                    snif_delimiter = detect_delimiter(csv_file)
-                    df = pd.read_csv(csv_file, delimiter=snif_delimiter)
-
-                dfs.append(df)
-
-            all_columns = [col for df in dfs for col in df.columns]
-            duplicate_columns = [col for col in set(all_columns) if all_columns.count(col) > 1]
-            if duplicate_columns:  # Some lists with same name ?
-                st.warning(f"Some lists have the same name: {', '.join(duplicate_columns)}")
-                filtered_dfs = []
-                included_columns = set()
-                for df in dfs:
-                    filtered_columns = [col for col in df.columns if col not in duplicate_columns]
-                    included_columns.update(filtered_columns)
-                    filtered_df = df[filtered_columns]
-                    filtered_dfs.append(filtered_df)
-                df = pd.concat(filtered_dfs, axis=1)
-
-            else:
-                df = pd.concat(dfs, axis=1)
-
-    if len(df) > 0:
-        # Lists section
-        st.subheader("🧮 Lists")
-        st.dataframe(df, hide_index=True)
-        lists = df.columns.tolist()
-
-        with col3:
-            # Lists selection
-            st.subheader('📌 Lists selection')
-            items_occurrence = {per_list: set(df[per_list].dropna()) for per_list in lists}
-            selection_lists = st.multiselect('Lists selection', lists, default=lists[:2],
-                                             placeholder="Choose 2-6 lists", disabled=False,
-                                             label_visibility='collapsed')
-            num_sets = len(selection_lists)
-            selected_lists = selection_lists[:num_sets]
-
-    with col1:
-        # Credits section
-        st.subheader("✒️Credits")
-        st.write("Original app by [@professordata](https://github.com/dataprofessor/vennlit)")
-        st.write(
-            "Venn diagram with [@tctianchi](https://github.com/tctianchi/pyvenn) and [@LankyCyril](https://github.com/LankyCyril/pyvenn)")
-        st.write(
-            "Inspired by [InteractiVenn](http://www.interactivenn.net/) (DOI:[10.1186/s12859-015-0611-3](http://doi.org/10.1186/s12859-015-0611-3)")
-        st.write("VennLit V2 rebuild and up-to-date by [@Jumitti](https://github.com/Jumitti/vennlit_v2)")
-        st.divider()
-        # streamlit_analytics.start_tracking()
-        # streamlit_analytics.stop_tracking()
-        # views = streamlit_analytics.main.counts["total_pageviews"]
-        # st.write(f"Total connections (from last reboot) 👨🏼‍💻: {int(views)}")
-        st.write(
-            "My other app: [TFinder](https://tfinder-ipmc.streamlit.app/) and [ChickenAI](https://chickenai.streamlit.app/)")
 
 # Setting of Venn configurations
 fmt_options = {"Number": "{size}",
@@ -239,6 +138,124 @@ legend_loc_options = {'Best': 'best',
                       'Center Right': 'center right',
                       'Center Left': 'center left',
                       'Center': 'center'}
+
+# Settings for Streamlit page
+st.set_page_config(
+    page_title="VennLit V2",
+    page_icon="⭕",
+    layout="wide")
+
+# Main page
+st.title('⭕ VennLit V2')
+
+df = []
+selection_lists = []
+
+col1, col2, col3 = st.columns([0.8, 1.4, 0.8])
+
+with col1:
+    # Example section
+    st.subheader("📎 Example and Hints")
+
+    st.link_button("Help", 'https://jumitti.notion.site/jumitti/VennLit-V2-e20a373a9c6f4c1390e72a7953ffcb0c')
+
+    if st.checkbox("**Try example**", value=1):  # Demo mode
+        with col2:
+            st.subheader('Welcome to VennLit V2 😊')
+            st.write('You are by default in **demo** mode.\n'
+                     'You can play with VennLit V2 or disable **Try example** on the left **📎 Example** section.\n'
+                     'You can also click on **Help**.')
+        csv_file = 'example/example.csv'
+        snif_delimiter = detect_delimiter(csv_file)
+        df = pd.read_csv(csv_file, delimiter=snif_delimiter)
+
+    st.write("**.csv and .xlsx templates:**")
+    with open("example/example.csv", "rb") as file:  # Download .csv template
+        st.download_button(
+            label="Download example.csv",
+            data=file,
+            file_name="example.csv",
+            mime="text/csv")
+    with open("example/example.xlsx", "rb") as file:  # Download .xlsx template
+        st.download_button(
+            label="Download example.xlsx",
+            data=file,
+            file_name="example.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+
+    # Upload data section
+    st.subheader("💽 Upload data")
+
+    uploaded_files = st.file_uploader("**Upload one or more .xlsx .csv files**", type=["csv", "xlsx"],
+                                      accept_multiple_files=True)
+    if uploaded_files is not None:
+        if len(uploaded_files) > 0:
+            dfs = []
+            for file in uploaded_files:  # Is .csv or .xlsx
+                if file.type == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
+                    df = pd.read_excel(file)
+                else:
+                    file_content = file.read()
+                    delimiter, encoding = detect_delimiter(file_content)
+                    df = pd.read_csv(io.StringIO(file_content.decode(encoding)), delimiter=delimiter)
+
+                dfs.append(df)
+
+            all_columns = [col for df in dfs for col in df.columns]
+            duplicate_columns = [col for col in set(all_columns) if all_columns.count(col) > 1]
+            if duplicate_columns:  # Some lists with same name ?
+                st.warning(f"Some lists have the same name: {', '.join(duplicate_columns)}")
+                filtered_dfs = []
+                included_columns = set()
+                for df in dfs:
+                    filtered_columns = [col for col in df.columns if col not in duplicate_columns]
+                    included_columns.update(filtered_columns)
+                    filtered_df = df[filtered_columns]
+                    filtered_dfs.append(filtered_df)
+                df = pd.concat(filtered_dfs, axis=1)
+            else:
+                df = pd.concat(dfs, axis=1)
+
+    try:
+        if len(df) > 0:
+            # Lists section
+            st.subheader("🧮 Lists")
+            st.dataframe(df, hide_index=True)
+            lists = df.columns.tolist()
+
+            with col3:
+                # Lists selection
+                st.subheader('📌 Lists selection')
+                items_occurrence = {per_list: set(df[per_list].dropna()) for per_list in lists}
+                selection_lists = st.multiselect('Lists selection', lists, default=lists[:2],
+                                                 placeholder="Choose 2-6 lists", disabled=False,
+                                                 label_visibility='collapsed')
+                num_sets = len(selection_lists)
+                selected_lists = selection_lists[:num_sets]
+    except Exception as e:
+        with col2:
+            st.warning(f"It appears that there is an error with one or more values in your lists..."
+                       "Please check your data. Otherwise, convert your file to .csv with the ';' deliminator.\n\n"
+                       "If this does not resolve the problems, contact me by email (minnitijulien06@gmail.com ; minniti@ipmc.cnrs.fr) or submit a [GitHub Issue](https://github.com/Jumitti/vennlit_v2/issues).\n\n"
+                       "Error information:"
+                       f"{e}", icon='🚨')
+
+    with col1:
+        # Credits section
+        st.subheader("✒️Credits")
+        st.write("Original app by [@professordata](https://github.com/dataprofessor/vennlit)")
+        st.write(
+            "Venn diagram with [@tctianchi](https://github.com/tctianchi/pyvenn) and [@LankyCyril](https://github.com/LankyCyril/pyvenn)")
+        st.write(
+            "Inspired by [InteractiVenn](http://www.interactivenn.net/) (DOI:[10.1186/s12859-015-0611-3](http://doi.org/10.1186/s12859-015-0611-3)")
+        st.write("VennLit V2 rebuild and up-to-date by [@Jumitti](https://github.com/Jumitti/vennlit_v2)")
+        st.divider()
+        # streamlit_analytics.start_tracking()
+        # streamlit_analytics.stop_tracking()
+        # views = streamlit_analytics.main.counts["total_pageviews"]
+        # st.write(f"Total connections (from last reboot) 👨🏼‍💻: {int(views)}")
+        st.write(
+            "My other app: [TFinder](https://tfinder-ipmc.streamlit.app/) and [ChickenAI](https://chickenai.streamlit.app/)")
 
 try:
     plt.figure(figsize=(8, 8))
