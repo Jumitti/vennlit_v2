@@ -29,7 +29,13 @@ def download_venn_data(lists):
 
     with ZipFile(zip_buffer, 'a') as zip_file:
         for current_list, items_current_list in items_occurrence.items():
-            file_content = "\n".join(items_current_list)
+            exclusive_items = items_current_list.copy()
+
+            for other_list, items_other_list in items_occurrence.items():
+                if other_list != current_list:
+                    exclusive_items -= items_other_list
+
+            file_content = "\n".join(map(str, exclusive_items))
             zip_file.writestr(f"1_{current_list}.txt", file_content)
 
         for combination_size in range(2, len(lists) + 1):
