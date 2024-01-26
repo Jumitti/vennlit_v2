@@ -178,12 +178,13 @@ with col1:
 
     st.link_button("Help", 'https://jumitti.notion.site/jumitti/VennLit-V2-e20a373a9c6f4c1390e72a7953ffcb0c')
 
-    if st.checkbox("**Try example**", value=1):  # Demo mode
+    demo = st.checkbox("**Try example**", value=1)
+    if demo:  # Demo mode
         with col2:
             st.subheader('Welcome to VennLit V2 😊')
             st.write('You are by default in **demo** mode.\n'
                      'You can play with VennLit V2 or disable **Try example** on the left **📎 Example** section.\n'
-                     'You can also click on **Help**.')
+                     'You can also click on **[Help](https://jumitti.notion.site/jumitti/VennLit-V2-e20a373a9c6f4c1390e72a7953ffcb0c)**.')
         csv_file = 'example/example.csv'
         snif_delimiter = detect_delimiter(csv_file)
         df = pd.read_csv(csv_file, delimiter=snif_delimiter)
@@ -233,6 +234,12 @@ with col1:
             df = pd.concat(filtered_dfs, axis=1)
         else:
             df = pd.concat(dfs, axis=1)
+    elif len(uploaded_files) == 0 and not demo:
+        st.cache_data.clear()
+        with col2:
+            st.subheader('Welcome to VennLit V2 😊')
+            st.write('You can play with VennLit V2 or enable **Try example** on the left **📎 Example** section.\n'
+                     'You can also click on **[Help](https://jumitti.notion.site/jumitti/VennLit-V2-e20a373a9c6f4c1390e72a7953ffcb0c)**.')
     else:
         st.cache_data.clear()
 
