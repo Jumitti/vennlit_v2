@@ -11,6 +11,25 @@ import chardet
 import csv
 
 
+@st.cache_data(ttl=3600)
+def load_sheet_names(file):
+    df = pd.ExcelFile(file)
+    sheet_names = df.sheet_names
+    return sheet_names
+
+
+@st.cache_data(ttl=3600)
+def load_data(file, selected_sheet=None):
+    if file.type == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
+        df = pd.read_excel(file, sheet_name=selected_sheet)
+    else:
+        file_content = file.read()
+        delimiter, encoding = detect_delimiter(file_content)
+        df = pd.read_csv(io.StringIO(file_content.decode(encoding)), delimiter=delimiter)
+    return df
+
+
+@st.cache_data(ttl=3600)
 def detect_delimiter(file_path):
     try:
         with open(file_path, 'rb') as f:
@@ -21,9 +40,9 @@ def detect_delimiter(file_path):
             dialect = csv.Sniffer().sniff(sample)
         return dialect.delimiter
     except Exception as e:
-        result = chardet.detect(file_content)
+        result = chardet.detect(file_path)
         encoding = result['encoding']
-        sample = file_content[:4096]
+        sample = file_path[:4096]
         sample = sample.decode(encoding)
         dialect = csv.Sniffer().sniff(sample)
 
@@ -31,7 +50,7 @@ def detect_delimiter(file_path):
 
 
 # Analyse of selected list to generate multidimensional Venn files
-@st.cache_data
+@st.cache_data(ttl=3600)
 def download_venn_data(lists):
     items_occurrence = {per_list: set(df[per_list].dropna()) for per_list in lists}
     zip_buffer = BytesIO()
@@ -163,52 +182,53 @@ with col1:
         snif_delimiter = detect_delimiter(csv_file)
         df = pd.read_csv(csv_file, delimiter=snif_delimiter)
 
-    st.write("**.csv and .xlsx templates:**")
-    with open("example/example.csv", "rb") as file:  # Download .csv template
-        st.download_button(
-            label="Download example.csv",
-            data=file,
-            file_name="example.csv",
-            mime="text/csv")
-    with open("example/example.xlsx", "rb") as file:  # Download .xlsx template
-        st.download_button(
-            label="Download example.xlsx",
-            data=file,
-            file_name="example.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    with st.expander("**.csv and .xlsx templates**", expanded=False):
+        with open("example/example.csv", "rb") as file:  # Download .csv template
+            st.download_button(
+                label="Download example.csv",
+                data=file,
+                file_name="example.csv",
+                mime="text/csv")
+        with open("example/example.xlsx", "rb") as file:  # Download .xlsx template
+            st.download_button(
+                label="Download example.xlsx",
+                data=file,
+                file_name="example.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
     # Upload data section
     st.subheader("💽 Upload data")
 
     uploaded_files = st.file_uploader("**Upload one or more .xlsx .csv files**", type=["csv", "xlsx"],
                                       accept_multiple_files=True)
-    if uploaded_files is not None:
-        if len(uploaded_files) > 0:
-            dfs = []
-            for file in uploaded_files:  # Is .csv or .xlsx
-                if file.type == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
-                    df = pd.read_excel(file)
-                else:
-                    file_content = file.read()
-                    delimiter, encoding = detect_delimiter(file_content)
-                    df = pd.read_csv(io.StringIO(file_content.decode(encoding)), delimiter=delimiter)
-
-                dfs.append(df)
-
-            all_columns = [col for df in dfs for col in df.columns]
-            duplicate_columns = [col for col in set(all_columns) if all_columns.count(col) > 1]
-            if duplicate_columns:  # Some lists with same name ?
-                st.warning(f"Some lists have the same name: {', '.join(duplicate_columns)}")
-                filtered_dfs = []
-                included_columns = set()
-                for df in dfs:
-                    filtered_columns = [col for col in df.columns if col not in duplicate_columns]
-                    included_columns.update(filtered_columns)
-                    filtered_df = df[filtered_columns]
-                    filtered_dfs.append(filtered_df)
-                df = pd.concat(filtered_dfs, axis=1)
+    if len(uploaded_files) > 0:
+        dfs = []
+        for file in uploaded_files:  # Is .csv or .xlsx
+            if file.type == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':
+                sheet_names = load_sheet_names(file)
+                selected_sheet = st.selectbox(f"Select sheet for **{file.name}**:", sheet_names)
+                df = load_data(file, selected_sheet=selected_sheet)
             else:
-                df = pd.concat(dfs, axis=1)
+                df = load_data(file)
+
+            dfs.append(df)
+
+        all_columns = [col for df in dfs for col in df.columns]
+        duplicate_columns = [col for col in set(all_columns) if all_columns.count(col) > 1]
+        if duplicate_columns:  # Some lists with same name ?
+            st.warning(f"Some lists have the same name: {', '.join(duplicate_columns)}")
+            filtered_dfs = []
+            included_columns = set()
+            for df in dfs:
+                filtered_columns = [col for col in df.columns if col not in duplicate_columns]
+                included_columns.update(filtered_columns)
+                filtered_df = df[filtered_columns]
+                filtered_dfs.append(filtered_df)
+            df = pd.concat(filtered_dfs, axis=1)
+        else:
+            df = pd.concat(dfs, axis=1)
+    else:
+        st.cache_data.clear()
 
     try:
         if len(df) > 0:
@@ -222,7 +242,7 @@ with col1:
                 st.subheader('📌 Lists selection')
                 items_occurrence = {per_list: set(df[per_list].dropna()) for per_list in lists}
                 selection_lists = st.multiselect('Lists selection', lists, default=lists[:2],
-                                                 placeholder="Choose 2-6 lists", disabled=False,
+                                                 placeholder="Choose lists", disabled=False,
                                                  label_visibility='collapsed')
                 num_sets = len(selection_lists)
                 selected_lists = selection_lists[:num_sets]
