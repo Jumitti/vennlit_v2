@@ -1,5 +1,5 @@
 pandas
-streamlit
+streamlit==1.33
 matplotlib
 venn
 openpyxl
