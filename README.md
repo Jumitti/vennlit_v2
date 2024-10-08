@@ -1,6 +1,8 @@
 # ⭕ VennLit V2
 
-**Application is accessible [HERE](https://vennlit.streamlit.app/)**
+**Application is accessible [HERE](https://labmaster.streamlit.app/)**
+
+### ⚠ THE PROJECT HAS BEEN COMPILED IN [LABMASTER](https://github.com/Jumitti/labmaster)
 
 A Venn diagram is a graphical representation of the relationships between different sets or groups of items. It is typically composed of overlapping circles, each representing a set, and the overlapping regions represent the elements that are common to those sets. The purpose of a Venn diagram is to visually illustrate the extent of overlap and the relationships between different sets of data. It is widely used in mathematics, logic, statistics, and various other fields to depict the intersections and differences between distinct categories or groups.
 
@@ -97,4 +99,4 @@ Some intersections are not present, but the most commonly wanted are. You might 
 At first, it was to quickly sort my data. Then I wanted to have fun. I started working on it then I found [@dataprofessor](https://github.com/dataprofessor/vennlit)'s GitHub. So I joined the project. 
 I added something new using [@LankyCyril](https://github.com/LankyCyril/pyvenn), a fork of [@tctianchi](https://github.com/tctianchi/pyvenn). And I also thank [InteractiVenn](http://www.interactivenn.net/) for inspiring me ([DOI](http://doi.org/10.1186/s12859-015-0611-3)).
 
-If you encounter a problem, please send an email to [minniti@ipm.cnrs.fr](mailto:minniti@ipm.cnrs.fr) or [minnitijulien06@gmail.com](mailto:minnitijulien06@gmail.com) or use the [Issues](https://github.com/Jumitti/vennlit_v2).
+If you encounter a problem, please send an email to [minniti@ipm.cnrs.fr](mailto:minniti@ipm.cnrs.fr) or [minnitijulien06@gmail.com](mailto:minnitijulien06@gmail.com) or use the [Issues](https://github.com/Jumitti/LabMaster/issues).
